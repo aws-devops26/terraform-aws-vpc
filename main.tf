@@ -1,4 +1,4 @@
-resource "aws_vpc" "main" {
+resource "aws_vpc" "default" {
   cidr_block       = var.vpc_cidr
   enable_dns_hostnames = var.enable_dns_hostnames
 
@@ -12,7 +12,7 @@ resource "aws_vpc" "main" {
 }
 
 resource "aws_internet_gateway" "gw" {
-  vpc_id = aws_vpc.main.id
+  vpc_id = aws_vpc.default.id
   tags = merge(
     var.common_tags,
     var.igw_tags,
@@ -24,7 +24,7 @@ resource "aws_internet_gateway" "gw" {
 
 resource "aws_subnet" "public" {
   count = length(var.public_subnets_cidr)
-  vpc_id     = aws_vpc.main.id
+  vpc_id     = aws_vpc.default.id
   cidr_block = var.public_subnets_cidr[count.index]
   availability_zone = local.az_names[count.index]
   map_public_ip_on_launch = true
@@ -39,7 +39,7 @@ resource "aws_subnet" "public" {
 
 resource "aws_subnet" "private" {
   count = length(var.private_subnets_cidr)
-  vpc_id     = aws_vpc.main.id
+  vpc_id     = aws_vpc.default.id
   cidr_block = var.private_subnets_cidr[count.index]
   availability_zone = local.az_names[count.index]
 
@@ -48,13 +48,14 @@ resource "aws_subnet" "private" {
     var.private_subnets_tags,
   {
     Name = "${local.Name}-private ${local.az_names[count.index]}"
+
   }
   )
 }
 
 resource "aws_subnet" "database" {
   count = length(var.database_subnets_cidr)
-  vpc_id = aws_vpc.main.id
+  vpc_id = aws_vpc.default.id
   cidr_block = var.database_subnets_cidr[count.index]
   availability_zone = local.az_names[count.index]
   tags = merge(
@@ -95,7 +96,7 @@ resource "aws_nat_gateway" "main" {
 }
 # public route table
 resource "aws_route_table" "public" {
-  vpc_id = aws_vpc.main.id
+  vpc_id = aws_vpc.default.id
 
   tags = merge(
     var.common_tags,
@@ -108,7 +109,7 @@ resource "aws_route_table" "public" {
 
 #private route table
 resource "aws_route_table" "private" {
-  vpc_id = aws_vpc.main.id
+  vpc_id = aws_vpc.default.id
 
   tags = merge(
     var.common_tags,
@@ -122,7 +123,7 @@ resource "aws_route_table" "private" {
 
 #database route table
 resource "aws_route_table" "database" {
-vpc_id = aws_vpc.main.id
+vpc_id = aws_vpc.default.id
 
 tags = merge(
   var.common_tags,
